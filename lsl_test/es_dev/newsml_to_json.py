@@ -1,0 +1,15 @@
+import json
+import xmltodict
+
+def make_json(xml_dir, xml_name):
+    with open(xml_dir+'/'+xml_name,'r', encoding='utf-8') as f:
+        xmlString = f.read()
+
+    jsonDump = xmltodict.parse(xmlString)['NewsML']
+
+    # json 파일 저장 필요할 경우 사용
+    # jsonString = json.dumps(jsonDump, indent=4)
+    # with open(xml_name.replace(".xml",".json"), 'w') as f:
+    #     f.write(jsonString)
+    
+    return jsonDump
