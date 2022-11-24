@@ -21,7 +21,7 @@ logger.addHandler(stream_handler)
 file_handler = logging.FileHandler('insert.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
-
+row = 0
 try:
     # MySQL Connection 연결
     con = pymysql.connect(host='192.168.0.227', user='user', password='lab13579'
@@ -52,36 +52,42 @@ try:
 
     # 조회할 es 정보
     for idx, id in enumerate(id_arr):
-        year = id.split(".")[1][:4]
-        index = 'kpf_bigkindslab_v1.1_'+year
-        body = {
-            "_source": ["NewsItem.NewsComponent.NewsComponent.ContentItem.DataContent"],
-            "query": {
-                "match": {
-                    "_id": id
+        try:
+            if idx!=0 and idx%100==0:
+                print(idx)
+                # DB에 학습데이터 insert
+                for i,conts in enumerate(conts_arr):
+                    sql = """INSERT INTO ABKL_NEWS_SUBJ_LEARN_DATA 
+                        (NEWSITEMID, NEWS_CNTS, NEWS_BIG_SUBJ_CD, NEWS_SML_SUBJ_CD, NEWS_BIG_SUBJ_NM, NEWS_SML_SUBJ_NM)
+                        SELECT ansr.NEWSITEMID , %s AS NEWS_CNTS, ansr.NEWS_BIG_SUBJ_CD , ansr.NEWS_SML_SUBJ_CD , ansc.NEWS_BIG_SUBJ_NM , ansc.NEWS_SML_SUBJ_NM 
+                        FROM ABKL_NEWS_SUBJ_REFINE_1 ansr 
+                            LEFT OUTER JOIN ABKL_NEWS_SUBJ_CD ansc ON ansr.NEWS_SML_SUBJ_CD = ansc.NEWS_SML_SUBJ_CD 
+                        WHERE NEWSITEMID = %s
+                        """
+                    cur.execute(sql, (conts, id_arr[idx-100+i]))
+                    con.commit()
+                    conts_arr = []
+            
+            year = id.split(".")[1][:4]
+            index = 'kpf_bigkindslab_v1.1_'+year
+            body = {
+                "_source": ["NewsItem.NewsComponent.NewsComponent.ContentItem.DataContent"],
+                "query": {
+                    "match": {
+                        "_id": id
+                    }
                 }
             }
-        }
 
-        res = es.search(index=index, body=body)
-        conts = res['hits']['hits'][0]['_source']['NewsItem']['NewsComponent']['NewsComponent'][0]['ContentItem']['DataContent'].replace("&quot;","\"").replace("&apos;","'")
-        conts_arr.append(conts)
-
-    # DB에 학습데이터 insert
-    for i in range(len(conts_arr)):
-        sql = """INSERT INTO ABKL_NEWS_SUBJ_LEARN_DATA 
-            (NEWSITEMID, NEWS_CNTS, NEWS_BIG_SUBJ_CD, NEWS_SML_SUBJ_CD, NEWS_BIG_SUBJ_NM, NEWS_SML_SUBJ_NM)
-            SELECT ansr.NEWSITEMID , %s AS NEWS_CNTS, ansr.NEWS_BIG_SUBJ_CD , ansr.NEWS_SML_SUBJ_CD , ansc.NEWS_BIG_SUBJ_NM , ansc.NEWS_SML_SUBJ_NM 
-            FROM ABKL_NEWS_SUBJ_REFINE_1 ansr 
-                LEFT OUTER JOIN ABKL_NEWS_SUBJ_CD ansc ON ansr.NEWS_SML_SUBJ_CD = ansc.NEWS_SML_SUBJ_CD 
-            WHERE NEWSITEMID = %s
-            """
-        cur.execute(sql, (conts_arr[i], id_arr[i]))
-        con.commit()
+            res = es.search(index=index, body=body)
+            conts = res['hits']['hits'][0]['_source']['NewsItem']['NewsComponent']['NewsComponent'][0]['ContentItem']['DataContent'].replace("&quot;","\"").replace("&apos;","'")
+            conts_arr.append(conts)
+        finally:
+            row = idx
 
 except Exception as e:
     trace_back = traceback.format_exc()
-    message = str(e)+ "\n" + str(trace_back)
+    message = str(e)+ "\n" + str(trace_back) + "\n row = " + str(row)
     logger.error('[FAIL] %s', message)
 
 finally:
