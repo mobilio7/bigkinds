@@ -52,6 +52,8 @@ try:
 
     # 조회할 es 정보
     for idx, id in enumerate(id_arr):
+        if idx < 46452:
+            continue
         try:
             if idx!=0 and idx%100==0:
                 print(idx)
@@ -80,6 +82,8 @@ try:
             }
 
             res = es.search(index=index, body=body)
+            if len(res['hits']['hits']) == 0:
+                continue
             conts = res['hits']['hits'][0]['_source']['NewsItem']['NewsComponent']['NewsComponent'][0]['ContentItem']['DataContent'].replace("&quot;","\"").replace("&apos;","'")
             conts_arr.append(conts)
         finally:
