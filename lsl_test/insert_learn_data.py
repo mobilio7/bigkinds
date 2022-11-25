@@ -52,7 +52,9 @@ try:
 
     # 조회할 es 정보
     for idx, id in enumerate(id_arr):
-        if idx < 46452:
+        # if idx < 57352:
+        #     continue
+        if len(id) != 26:
             continue
         try:
             if idx!=0 and idx%100==0:
