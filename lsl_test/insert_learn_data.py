@@ -22,6 +22,7 @@ file_handler = logging.FileHandler('insert.log')
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 row = 0
+
 try:
     # MySQL Connection 연결
     con = pymysql.connect(host='192.168.0.227', user='user', password='lab13579'
@@ -52,8 +53,7 @@ try:
 
     # 조회할 es 정보
     for idx, id in enumerate(id_arr):
-        # if idx < 57352:
-        #     continue
+        # err_001
         if len(id) != 26:
             continue
         try:
@@ -84,6 +84,7 @@ try:
             }
 
             res = es.search(index=index, body=body)
+            # err_002
             if len(res['hits']['hits']) == 0:
                 continue
             conts = res['hits']['hits'][0]['_source']['NewsItem']['NewsComponent']['NewsComponent'][0]['ContentItem']['DataContent'].replace("&quot;","\"").replace("&apos;","'")

@@ -34,8 +34,7 @@ class Target:
     def run(self):
         event_handler = Handler()
         # schedule 실행
-        self.observer.schedule(event_handler, self.watchDir, 
-                                                       recursive=True)
+        self.observer.schedule(event_handler, self.watchDir, recursive=True)
         self.observer.start()
         try:
             while True:
